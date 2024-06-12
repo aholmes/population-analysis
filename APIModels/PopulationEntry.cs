@@ -15,6 +15,7 @@ namespace population_analysis.APIModels
         public string State { get; set; } = "";
         [JsonPropertyName("ID Year")]
         public int IdYear { get; set; }
+        public string Year { get; set; } = "";
         public int Population { get; set; }
         [JsonPropertyName("Slug State")]
         public string SlugState { get; set; } = "";
