@@ -80,7 +80,7 @@ internal static class Report
             }
 
             var primeFactors = GetPrimeFactors(previousYear.Value);
-            columns.Add($"{string.Join(',', primeFactors)}");
+            columns.Add($"{string.Join(';', primeFactors)}");
         }
 
         return table;
