@@ -1,4 +1,3 @@
-using Microsoft.Data.Analysis;
 using Microsoft.Extensions.Logging;
 using population_analysis;
 using population_analysis.APIModels;
@@ -26,6 +25,9 @@ class Program
 
         log.LogInformation("Total: {count}", data.Data.Count);
 
+        // The API returns data from most recent to oldest,
+        // but we want to work with the data rom oldest to latest.
+        data.Data.Reverse();
         var table = data.ToFormattedTable();
 
         var tempFile = Path.GetTempFileName();

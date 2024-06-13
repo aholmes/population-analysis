@@ -1,4 +1,4 @@
-﻿using population_analysis.APIModels;
+using population_analysis.APIModels;
 using population_analysis.ReportModels;
 using System;
 using System.Collections.Generic;
@@ -15,10 +15,6 @@ namespace population_analysis
          */
         public static Dictionary<State, Dictionary<Year, int>> ToRecords(this Result result)
         {
-            // The API returns data from most recent to oldest,
-            // but we want to work with the data rom oldest to latest.
-            result.Data.Reverse();
-
             return (
                 from entry in result.Data
                 group new KeyValuePair<Year, int>(
