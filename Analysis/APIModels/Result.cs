@@ -1,15 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace population_analysis.APIModels
+[assembly:InternalsVisibleTo("Test")]
+namespace Analysis.APIModels;
+
+internal class Result
 {
-    internal class Result
-    {
-        [JsonPropertyName("data")]
-        public List<PopulationEntry> Data { get; set; } = new List<PopulationEntry>();
-    }
+    [JsonPropertyName("data")]
+    public List<PopulationEntry> Data { get; set; } = new List<PopulationEntry>();
 }

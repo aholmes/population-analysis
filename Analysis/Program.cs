@@ -1,12 +1,13 @@
 using Microsoft.Extensions.Logging;
-using population_analysis;
-using population_analysis.APIModels;
-using population_analysis.ReportModels;
+using Analysis;
+using Analysis.APIModels;
+using Analysis.ReportModels;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
+namespace Analysis;
 class Program
 {
     static async Task<int> Main()
