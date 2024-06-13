@@ -1,14 +1,15 @@
+using Microsoft.Data.Analysis;
 using Microsoft.Extensions.Logging;
 using population_analysis;
 using population_analysis.APIModels;
+using population_analysis.ReportModels;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
 class Program
 {
-
-
     static async Task<int> Main()
     {
         var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
@@ -24,10 +25,8 @@ class Program
         }
 
         log.LogInformation($"Total: {data.Data.Count}");
-        //foreach (var record in data.Data)
-        //{
-
-        //}
+        var table = data.ToFormattedTable();
+        await table.SaveCsv();
 
         return 0;
     }
