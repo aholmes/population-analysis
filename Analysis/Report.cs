@@ -39,34 +39,6 @@ internal static class Report
         => result.ToRecords().ToFormattedTable();
 
     /**
-     * Get all prime factors of a number using a brute-force method.
-     */
-    private static List<int> GetPrimeFactors(int number)
-    {
-        var i = 2;
-        var factors = new List<int>();
-        while (i * i <= number)
-        {
-            if (number % i == 0)
-            {
-                number /= i;
-                factors.Add(i);
-            }
-            else
-            {
-                i += 1;
-            }
-        }
-
-        if (number > 1)
-        {
-            factors.Add(number);
-        }
-
-        return factors;
-    }
-
-    /**
      * Format structured API data into a "data table."
      *
      * The first "row" of the table contains the table's headers.
@@ -112,6 +84,34 @@ internal static class Report
         }
 
         return table;
+    }
+
+    /**
+     * Get all prime factors of a number using a brute-force method.
+     */
+    private static List<int> GetPrimeFactors(int number)
+    {
+        var i = 2;
+        var factors = new List<int>();
+        while (i * i <= number)
+        {
+            if (number % i == 0)
+            {
+                number /= i;
+                factors.Add(i);
+            }
+            else
+            {
+                i += 1;
+            }
+        }
+
+        if (number > 1)
+        {
+            factors.Add(number);
+        }
+
+        return factors;
     }
 
     /**
