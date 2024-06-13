@@ -89,7 +89,7 @@ internal static class Report
     /**
      * Get all prime factors of a number using a brute-force method.
      */
-    private static List<int> GetPrimeFactors(int number)
+    internal static List<int> GetPrimeFactors(int number)
     {
         var i = 2;
         var factors = new List<int>();
@@ -117,14 +117,21 @@ internal static class Report
     /**
      * Write a "data table" to a file.
      */
-    public static async Task SaveCsv(this List<List<string>> table, string filename)
+    public static async Task SaveCsv(this List<List<string>> table, Stream destinationStream)
     {
         var sb = new StringBuilder();
         foreach(var row in table)
         {
-            sb.AppendLine(string.Join(',', row.Select(col => $"\"{col.Replace("\"","\\\"")}\"")));
+            // CSV should use \r\n but AppendLine uses Environment.Newline, which is \n on Linux
+            sb.AppendLine(string.Join(',', row.Select(col => $"\"{col.Replace("\"","\\\"")}\"")), "\r\n");
         }
 
-        await File.WriteAllTextAsync(filename, sb.ToString());
+        await destinationStream.WriteAsync(Encoding.UTF8.GetBytes(sb.ToString()));
+    }
+
+    public static void AppendLine(this StringBuilder sb, string line, string newline)
+    {
+        sb.Append(line);
+        sb.Append(newline);
     }
 }

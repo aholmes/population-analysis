@@ -1,15 +1,22 @@
 using Analysis;
 using Analysis.APIModels;
 using Analysis.ReportModels;
+using System.Text;
 namespace Test;
 
 public class AnalysisReport
 {
     const int POPULATION = 123456789;
+    const string PRIME_FACTORS = "3;3;3607;3803";
     const string STATE_NAME = "California";
     const string STATE_SLUG = "california";
     const int YEAR = 2024;
     const string YEAR_NUMBER = "2024";
+    const string HEADER_STATE_NAME = "State Name";
+    const string HEADER_FACTORS = $"{YEAR_NUMBER} Factors";
+
+    static Dictionary<State, Dictionary<Year, int>> GetRecords()
+        => GetResult().ToRecords();
 
     static Result GetResult() => new()
     {
@@ -70,5 +77,76 @@ public class AnalysisReport
         Assert.NotNull(groupedState);
         Assert.True(groupedState.TryGetValue(year, out var population));
         Assert.Equal(POPULATION, population);
+    }
+
+
+    public static IEnumerable<object[]> GetData()
+    {
+
+        yield return new[] { GetRecords() };
+        yield return new[] { GetResult() };
+    }
+
+    static List<List<string>> ToFormattedTable(object data)
+    {
+        var methodInfo = typeof(Report).GetMethod(nameof(Report.ToFormattedTable), [data.GetType()]);
+        return (List<List<string>>)methodInfo!.Invoke(null, [data])!;
+    }
+
+    [Theory]
+    [MemberData(nameof(GetData))]
+    public void ToFormattedTable_Returns_DataTable_With_Headers(object data)
+    {
+        var table = ToFormattedTable(data);
+
+        // contains at least the headers and
+        // the one data entry
+        Assert.Equal(2, table.Count);
+        var headers = table[0];
+
+        Assert.Equal(3, headers.Count);
+        Assert.Equal(HEADER_STATE_NAME, headers[0]);
+        Assert.Equal(YEAR_NUMBER, headers[1]);
+        Assert.Equal(HEADER_FACTORS, headers[2]);
+    }
+
+    [Theory]
+    [MemberData(nameof(GetData))]
+    public void ToFormattedTable_Returns_DataTable_With_Data(object data)
+    {
+        var table = ToFormattedTable(data);
+
+        Assert.Equal(2, table.Count);
+        var tableData = table[1];
+
+        Assert.Equal(3, tableData.Count);
+        Assert.Equal(STATE_NAME, tableData[0]);
+        Assert.Equal(POPULATION.ToString(), tableData[1]);
+        Assert.Equal(PRIME_FACTORS, tableData[2]);
+    }
+
+    [Fact]
+    public void GetPrimeFactors_Returns_Correct_Prime_Factors()
+    {
+        var factors = Report.GetPrimeFactors(POPULATION);
+        var expectedFactors = PRIME_FACTORS.Split(';').ToList();
+        Assert.Equivalent(expectedFactors, factors);
+    }
+
+    [Fact]
+    public async Task SaveCsv_Writes_Data_To_Csv()
+    {
+        var table = GetRecords().ToFormattedTable();
+        using var ms = new MemoryStream();
+        await table.SaveCsv(ms);
+
+        using var sr = new StreamReader(ms);
+        ms.Seek(0, SeekOrigin.Begin);
+        var content = await sr.ReadToEndAsync();
+
+        var expectedContent = $"""
+        "{HEADER_STATE_NAME}","{YEAR_NUMBER}","{HEADER_FACTORS}"{"\r\n"}"{STATE_NAME}","{POPULATION}","{PRIME_FACTORS}"{"\r\n"}
+        """;
+        Assert.Equal(expectedContent, content);
     }
 }

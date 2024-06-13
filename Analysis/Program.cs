@@ -33,7 +33,10 @@ class Program
 
         var tempFile = Path.GetTempFileName();
         var csvFilename = $"{tempFile}.csv";
-        await table.SaveCsv(csvFilename);
+
+        using var file = File.Create(csvFilename);
+
+        await table.SaveCsv(file);
 
         Console.WriteLine($"CSV written to {csvFilename}");
         Console.WriteLine("Press any key to exit.");
