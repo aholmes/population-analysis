@@ -10,9 +10,15 @@ namespace population_analysis
 {
     internal static class Report
     {
+        /**
+         * Turn flat, deserialized API data into easier to work with structures.
+         */
         public static Dictionary<State, Dictionary<Year, int>> ToRecords(this Result result)
         {
+            // The API returns data from most recent to oldest,
+            // but we want to work with the data rom oldest to latest.
             result.Data.Reverse();
+
             return (
                 from entry in result.Data
                 group new KeyValuePair<Year, int>(
@@ -29,9 +35,15 @@ namespace population_analysis
             );
         }
 
+        /**
+         * Get a "data table" from deserialized API data.
+         */
         public static List<List<string>> ToFormattedTable(this Result result)
             => result.ToRecords().ToFormattedTable();
 
+        /**
+         * Get all prime factors of a number using a brute-force method.
+         */
         private static List<int> GetPrimeFactors(int number)
         {
             var i = 2;
@@ -57,12 +69,17 @@ namespace population_analysis
             return factors;
         }
 
+        /**
+         * Format structured API data into a "data table."
+         *
+         * The first "row" of the table contains the table's headers.
+         * The first column contains state names.
+         * All subsequent columns, excluding the final column, contain year population data.
+         * The final column contains prime factors.
+         */
         public static List<List<string>> ToFormattedTable(this Dictionary<State, Dictionary<Year, int>> records)
         {
-            var headerColumns = new List<string>
-            {
-                "State Name"
-            };
+            var headerColumns = new List<string> { "State Name" };
 
             foreach(var year in records.First().Value)
             {
@@ -70,10 +87,7 @@ namespace population_analysis
             }
             headerColumns.Add($"{headerColumns.Last()} Factors");
 
-            var table = new List<List<string>>()
-            {
-                headerColumns
-            };
+            var table = new List<List<string>>() { headerColumns };
 
             foreach(var state in records)
             {
@@ -103,7 +117,10 @@ namespace population_analysis
             return table;
         }
 
-        public static async Task SaveCsv(this List<List<string>> table)
+        /**
+         * Write a "data table" to a file.
+         */
+        public static async Task SaveCsv(this List<List<string>> table, string filename)
         {
             var sb = new StringBuilder();
             foreach(var row in table)
@@ -111,8 +128,7 @@ namespace population_analysis
                 sb.AppendLine(string.Join(',', row.Select(col => $"\"{col.Replace("\"","\\\"")}\"")));
             }
 
-            var savePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "table.csv");
-            await File.WriteAllTextAsync(savePath, sb.ToString());
+            await File.WriteAllTextAsync(filename, sb.ToString());
         }
     }
 }

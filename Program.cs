@@ -24,9 +24,17 @@ class Program
             return 1;
         }
 
-        log.LogInformation($"Total: {data.Data.Count}");
+        log.LogInformation("Total: {count}", data.Data.Count);
+
         var table = data.ToFormattedTable();
-        await table.SaveCsv();
+
+        var tempFile = Path.GetTempFileName();
+        var csvFilename = $"{tempFile}.csv";
+        await table.SaveCsv(csvFilename);
+
+        Console.WriteLine($"CSV written to {csvFilename}");
+        Console.WriteLine("Press any key to exit.");
+        Console.Read();
 
         return 0;
     }

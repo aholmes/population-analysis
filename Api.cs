@@ -14,7 +14,10 @@ namespace population_analysis
         readonly string _apiResultCacheFilename = apiResultCachePath ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), ".api_result_cache.json");
         readonly ILogger log = log;
 
-
+        /**
+         * Read cached JSON data from previous API calls that may
+         * have run from prior executions.
+         */
         async Task<Result?> GetFromCache()
         {
             try
@@ -46,6 +49,9 @@ namespace population_analysis
             return null;
         }
 
+        /**
+         * Get state population data from https://datausa.io/api/data?drilldowns=State&measures=Population
+         */
         public async Task<Result?> Get()
         {
             var data = await GetFromCache();
