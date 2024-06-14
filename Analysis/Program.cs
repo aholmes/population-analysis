@@ -42,6 +42,7 @@ class Program
         // but we want to work with the data rom oldest to latest.
         data.Data.Reverse();
         var table = data.ToFormattedTable();
+        var rawTable = data.ToRawTable();
 
         log.LogInformation(
             "The API returned {entryCount} population entries for {stateCount} states over {yearCount} years.",
@@ -52,6 +53,7 @@ class Program
 
         var success = false;
         string? path;
+        string? rawFilePath;
         FileInfo fileInfo;
         FileStream? file = null;
         do
@@ -59,6 +61,7 @@ class Program
             await Task.Delay(1); // cause the console logger to flush
             Console.Write("Enter a path to write the CSV file to: ");
             path = Console.ReadLine();
+            rawFilePath = $"{path.Replace(".csv", "")}.raw.csv";
             if (path == null || path == "") continue;
             fileInfo = new FileInfo(path);
 
@@ -67,12 +70,16 @@ class Program
                 try
                 {
                     file = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
-                    await table.SaveCsv(file);
+                    var rawFile = new FileStream(rawFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+                    await Task.WhenAll([
+                        table.SaveCsv(file),
+                        rawTable.SaveCsv(rawFile)
+                    ]);
                     success = true;
                 }
                 catch (UnauthorizedAccessException)
                 {
-                    Console.WriteLine($"Permission was denied to either `{fileInfo.DirectoryName}` or `{path}`.");
+                    Console.WriteLine($"Permission was denied to either `{fileInfo.DirectoryName}` or `{path}` or `{rawFilePath}`.");
                 }
                 catch (Exception e)
                 {
@@ -80,7 +87,7 @@ class Program
                     // Instead of Console.WriteLine for this error, use the logging mechanism.
                     // This makes it easier to show what specific error occurred so the
                     // user may possibly resolve the issue themselves.
-                    log.LogError(e, "An unexpected problem occurred trying to open or write to the file `{path}`.", path);
+                    log.LogError(e, "An unexpected problem occurred trying to open or write to the file `{path}` or `{rawFilePath}`.", path, rawFilePath);
                 }
                 finally
                 {
@@ -93,7 +100,8 @@ class Program
             }
         } while (!success);
 
-        Console.WriteLine($"CSV written to ` {path} `");
+        Console.WriteLine($"Formatted CSV data written to ` {path} `");
+        Console.WriteLine($"Raw CSV data written to ` {rawFilePath} `");
         Console.WriteLine("Press any key to exit.");
         Console.Read();
 
