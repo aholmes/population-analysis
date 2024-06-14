@@ -19,8 +19,9 @@ class Program
 
         var serviceProvider = new ServiceCollection().AddHttpClient().BuildServiceProvider();
         var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
+        using var cacheDestination = new FileStream(Path.Combine(Path.GetTempPath(), ".population_api_result_cache.json"), FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
 
-        var api = new Api(httpClientFactory, log);
+        var api = new Api(httpClientFactory, log, cacheDestination);
         var data = await api.Get();
 
         if (data == null)

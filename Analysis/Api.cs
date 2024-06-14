@@ -11,9 +11,9 @@ using System.Net.Http;
 
 [assembly:InternalsVisibleTo("Test")]
 namespace Analysis;
-internal class Api(IHttpClientFactory httpClientFactory, ILogger log, string? apiResultCachePath = null)
+internal class Api(IHttpClientFactory httpClientFactory, ILogger log, Stream cacheDestination)
 {
-    readonly string _apiResultCacheFilename = apiResultCachePath ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), ".api_result_cache.json");
+    readonly Stream cacheDestination = cacheDestination;
     readonly ILogger log = log;
     readonly IHttpClientFactory httpClientFactory = httpClientFactory;
 
@@ -25,9 +25,8 @@ internal class Api(IHttpClientFactory httpClientFactory, ILogger log, string? ap
     {
         try
         {
-
-            var cache = File.OpenRead(_apiResultCacheFilename);
-            var data = await JsonSerializer.DeserializeAsync<Result>(cache);
+            cacheDestination.SetLength(0);
+            var data = await JsonSerializer.DeserializeAsync<Result>(cacheDestination);
             log.LogDebug("API data loaded from cache.");
             return data;
         }
@@ -38,11 +37,6 @@ internal class Api(IHttpClientFactory httpClientFactory, ILogger log, string? ap
         catch (JsonException)
         {
             log.LogDebug("Cache is invalid. Will make HTTP request.");
-            try
-            {
-                File.Delete(_apiResultCacheFilename);
-            }
-            catch { }
         }
         catch(Exception e)
         {
@@ -68,11 +62,8 @@ internal class Api(IHttpClientFactory httpClientFactory, ILogger log, string? ap
 
         try
         {
-            using (var cache = File.OpenWrite(_apiResultCacheFilename))
-            {
-                json.Seek(0, SeekOrigin.Begin);
-                json.CopyTo(cache);
-            }
+            json.Seek(0, SeekOrigin.Begin);
+            json.CopyTo(cacheDestination);
             log.LogDebug("API data written to cache.");
         }
         catch
