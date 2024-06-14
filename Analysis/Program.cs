@@ -47,7 +47,7 @@ class Program
             "The API returned {entryCount} population entries for {stateCount} states over {yearCount} years.",
             data.Data.Count,
             table.Count - 1 /*account for the header*/,
-            table.First().Count - 2 /*account the "state name" and "factors" columns*/
+            table.First().Count - 2 /*account for the "state name" and "factors" columns*/
         );
 
         var success = false;

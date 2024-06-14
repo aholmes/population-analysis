@@ -2,6 +2,7 @@ using Analysis.APIModels;
 using Analysis.ReportModels;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -40,9 +41,10 @@ internal static class Report
     /// Get a "data table" from deserialized API data.
     /// </summary>
     /// <param name="result"></param>
+    /// <param name="sort">Sort data columns, but not header. Defaults to `true`.</param>
     /// <returns>A "data table" (a list of "rows" containing a list of "columns") with calculated population data.</returns>
-    public static List<List<string>> ToFormattedTable(this Result result)
-        => result.ToRecords().ToFormattedTable();
+    public static List<List<string>> ToFormattedTable(this Result result, bool sort = true)
+        => result.ToRecords().ToFormattedTable(sort: sort);
 
     /// <summary>
     ///
@@ -54,8 +56,9 @@ internal static class Report
     /// The final column contains prime factors.
     /// </summary>
     /// <param name="records"></param>
+    /// <param name="sort">Sort data columns, but not header. Defaults to `true`.</param>
     /// <returns>A "data table" (a list of "rows" containing a list of "columns") with calculated population data.</returns>
-    public static List<List<string>> ToFormattedTable(this Dictionary<State, Dictionary<Year, int>> records)
+    public static List<List<string>> ToFormattedTable(this Dictionary<State, Dictionary<Year, int>> records, bool sort = true)
     {
         var headerColumns = new List<string> { "State Name" };
 
@@ -67,7 +70,11 @@ internal static class Report
 
         var table = new List<List<string>>() { headerColumns };
 
-        foreach(var state in records)
+
+        IEnumerable<KeyValuePair<State, Dictionary<Year, int>>> sortedRecords = sort
+            ? records.OrderBy(state => state.Key.Name)
+            : records;
+        foreach(var state in sortedRecords)
         {
             var columns = new List<string>
             {

@@ -89,8 +89,8 @@ public class AnalysisReport
 
     static List<List<string>> ToFormattedTable(object data)
     {
-        var methodInfo = typeof(Report).GetMethod(nameof(Report.ToFormattedTable), [data.GetType()]);
-        return (List<List<string>>)methodInfo!.Invoke(null, [data])!;
+        var methodInfo = typeof(Report).GetMethod(nameof(Report.ToFormattedTable), [data.GetType(), typeof(bool)]);
+        return (List<List<string>>)methodInfo!.Invoke(null, [data, true])!;
     }
 
     [Theory]
@@ -123,6 +123,43 @@ public class AnalysisReport
         Assert.Equal(STATE_NAME, tableData[0]);
         Assert.Equal(POPULATION.ToString(), tableData[1]);
         Assert.Equal(PRIME_FACTORS, tableData[2]);
+    }
+
+    [Fact]
+    public void ToFormattedTable_Returns_Unsorted_Header()
+    {
+        var records = GetRecords();
+        records.Add(
+            new State(Name: "ZZZ", Slug: "zzz"),
+            new Dictionary<Year, int> { { new Year(YEAR_NUMBER), POPULATION } }
+        );
+        records.Add(
+            new State(Name: "AAA", Slug: "aaa"),
+            new Dictionary<Year, int> { { new Year(YEAR_NUMBER), POPULATION } }
+        );
+
+        var table = records.ToFormattedTable(sort: true);
+
+        Assert.Equal("State Name", table[0][0]);
+    }
+
+    [Fact]
+    public void ToFormattedTable_Returns_Sorted_Data()
+    {
+        var records = GetRecords();
+        records.Add(
+            new State(Name: "ZZZ", Slug: "zzz"),
+            new Dictionary<Year, int> { { new Year(YEAR_NUMBER), POPULATION } }
+        );
+        records.Add(
+            new State(Name: "AAA", Slug: "aaa"),
+            new Dictionary<Year, int> { { new Year(YEAR_NUMBER), POPULATION } }
+        );
+
+        var table = records.ToFormattedTable(sort: true);
+
+        Assert.Equal("AAA", table[1][0]);
+        Assert.Equal("ZZZ", table[3][0]);
     }
 
     [Fact]
