@@ -8,21 +8,29 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.DependencyInjection;
 using System.Runtime.InteropServices;
+using System.ComponentModel;
+using Microsoft.Extensions.Logging.Console;
 
 namespace Analysis;
 class Program
 {
     static async Task<int> Main()
     {
-        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-        var log = loggerFactory.CreateLogger<Program>();
-
-        var serviceProvider = new ServiceCollection().AddHttpClient().BuildServiceProvider();
+        using var serviceProvider = new ServiceCollection()
+            .AddLogging(b => b
+                .AddSimpleConsole(c => c.SingleLine = true)
+                .SetMinimumLevel(LogLevel.Debug)
+            )
+            .AddHttpClient()
+            .BuildServiceProvider();
         var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
-        using var cacheDestination = new FileStream(Path.Combine(Path.GetTempPath(), ".population_api_result_cache.json"), FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
+        var log = serviceProvider.GetRequiredService<ILogger<Program>>();
 
-        var api = new Api(httpClientFactory, log, cacheDestination);
-        var data = await api.Get();
+        Result? data = null;
+        using (var api = new Api(httpClientFactory, log))
+        {
+            data = await api.Get();
+        }
 
         if (data == null)
         {
@@ -30,21 +38,28 @@ class Program
             return 1;
         }
 
-        log.LogInformation("Total: {count}", data.Data.Count);
-
         // The API returns data from most recent to oldest,
         // but we want to work with the data rom oldest to latest.
         data.Data.Reverse();
         var table = data.ToFormattedTable();
 
+        log.LogInformation(
+            "The API returned {entryCount} population entries for {stateCount} states over {yearCount} years.",
+            data.Data.Count,
+            table.Count - 1 /*account for the header*/,
+            table.First().Count - 2 /*account the "state name" and "factors" columns*/
+        );
+
         var success = false;
-        string path;
+        string? path;
         FileInfo fileInfo;
         FileStream? file = null;
         do
         {
+            await Task.Delay(1); // cause the console logger to flush
             Console.Write("Enter a path to write the CSV file to: ");
-            path = Console.ReadLine()!;
+            path = Console.ReadLine();
+            if (path == null || path == "") continue;
             fileInfo = new FileInfo(path);
 
             if (fileInfo.Directory?.Exists == true)
@@ -59,9 +74,13 @@ class Program
                 {
                     Console.WriteLine($"Permission was denied to either `{fileInfo.DirectoryName}` or `{path}`.");
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
-                    Console.WriteLine($"An unexpected problem occurred trying to open the file `{path}`.");
+                    // We know in this application that the Console is the log destination.
+                    // Instead of Console.WriteLine for this error, use the logging mechanism.
+                    // This makes it easier to show what specific error occurred so the
+                    // user may possibly resolve the issue themselves.
+                    log.LogError(e, "An unexpected problem occurred trying to open or write to the file `{path}`.", path);
                 }
                 finally
                 {

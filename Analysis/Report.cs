@@ -11,9 +11,13 @@ using System.Threading.Tasks;
 namespace Analysis;
 internal static class Report
 {
-    /**
-     * Turn flat, deserialized API data into easier to work with structures.
-     */
+    /// <summary>
+    /// Turn flat, deserialized API data into easier to work with structures.
+    /// </summary>
+    /// <param name="result"></param>
+    /// <returns>
+    /// A dictionary grouped by state, containing groupings by year, whose value is the state's population in that year.
+    /// </returns>
     public static Dictionary<State, Dictionary<Year, int>> ToRecords(this Result result)
     {
         return (
@@ -32,20 +36,25 @@ internal static class Report
         );
     }
 
-    /**
-     * Get a "data table" from deserialized API data.
-     */
+    /// <summary>
+    /// Get a "data table" from deserialized API data.
+    /// </summary>
+    /// <param name="result"></param>
+    /// <returns>A "data table" (a list of "rows" containing a list of "columns") with calculated population data.</returns>
     public static List<List<string>> ToFormattedTable(this Result result)
         => result.ToRecords().ToFormattedTable();
 
-    /**
-     * Format structured API data into a "data table."
-     *
-     * The first "row" of the table contains the table's headers.
-     * The first column contains state names.
-     * All subsequent columns, excluding the final column, contain year population data.
-     * The final column contains prime factors.
-     */
+    /// <summary>
+    ///
+    /// Format structured API data into a "data table."
+    ///
+    /// The first "row" of the table contains the table's headers.
+    /// The first column contains state names.
+    /// All subsequent columns, excluding the final column, contain year population data.
+    /// The final column contains prime factors.
+    /// </summary>
+    /// <param name="records"></param>
+    /// <returns>A "data table" (a list of "rows" containing a list of "columns") with calculated population data.</returns>
     public static List<List<string>> ToFormattedTable(this Dictionary<State, Dictionary<Year, int>> records)
     {
         var headerColumns = new List<string> { "State Name" };
@@ -86,9 +95,13 @@ internal static class Report
         return table;
     }
 
-    /**
-     * Get all prime factors of a number using a brute-force method.
-     */
+    /// <summary>
+    ///
+    /// Get all prime factors of a number using a brute-force method.
+    ///
+    /// </summary>
+    /// <param name="number"></param>
+    /// <returns></returns>
     internal static List<int> GetPrimeFactors(int number)
     {
         var i = 2;
@@ -114,9 +127,12 @@ internal static class Report
         return factors;
     }
 
-    /**
-     * Write a "data table" to a file.
-     */
+    /// <summary>
+    /// Write a "data table" (a list of "rows" containing a list of "columns") to a stream.
+    /// </summary>
+    /// <param name="table"></param>
+    /// <param name="destinationStream"></param>
+    /// <returns></returns>
     public static async Task SaveCsv(this List<List<string>> table, Stream destinationStream)
     {
         var sb = new StringBuilder();
@@ -130,6 +146,15 @@ internal static class Report
         await destinationStream.WriteAsync(data);
     }
 
+    /// <summary>
+    /// Append a line using the specified `newline` character sequence.
+    ///
+    /// This is useful to enforce a consistent newline character instead of
+    /// the default `Environment.NewLine` used by the standard library.
+    /// </summary>
+    /// <param name="sb"></param>
+    /// <param name="line"></param>
+    /// <param name="newline"></param>
     public static void AppendLine(this StringBuilder sb, string line, string newline)
     {
         sb.Append(line);
