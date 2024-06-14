@@ -47,7 +47,18 @@ internal static class Report
         => result.ToRecords().ToFormattedTable(sort: sort);
 
     /// <summary>
+    /// Get a "data table" from deserialized API data.
     ///
+    /// This method is similar to <see cref="ToFormattedTable(Result, bool)"/>
+    /// but excludes headers and prime factors
+    /// </summary>
+    /// <param name="records"></param>
+    /// <param name="sort">Sort data columns, but not header. Defaults to `true`.</param>
+    /// <returns>A "data table" (a list of "rows" containing a list of "columns") with calculated population data.</returns>
+    public static List<List<string>> ToRawTable(this Result result, bool sort = true)
+        => result.ToRecords().ToRawTable(sort: sort);
+
+    /// <summary>
     /// Format structured API data into a "data table."
     ///
     /// The first "row" of the table contains the table's headers.
@@ -68,7 +79,7 @@ internal static class Report
         }
         headerColumns.Add($"{headerColumns.Last()} Factors");
 
-        var table = new List<List<string>>() { headerColumns };
+        var table = new List<List<string>> { headerColumns };
 
 
         IEnumerable<KeyValuePair<State, Dictionary<Year, int>>> sortedRecords = sort
@@ -97,6 +108,41 @@ internal static class Report
 
             var primeFactors = GetPrimeFactors(previousYear.Value);
             columns.Add($"{string.Join(';', primeFactors)}");
+        }
+
+        return table;
+    }
+
+    /// <summary>
+    /// Format structured API data into a "data table."
+    /// This method is similar to <see cref="ToFormattedTable(Dictionary{State, Dictionary{Year, int}}, bool)"/>
+    /// but excludes headers and prime factors
+    ///
+    /// The first column contains state names.
+    /// All subsequent columns, excluding the final column, contain year population data.
+    /// </summary>
+    /// <param name="records"></param>
+    /// <param name="sort">Sort data columns, but not header. Defaults to `true`.</param>
+    /// <returns>A "data table" (a list of "rows" containing a list of "columns") with calculated population data.</returns>
+    public static List<List<string>> ToRawTable(this Dictionary<State, Dictionary<Year, int>> records, bool sort = true)
+    {
+        var table = new List<List<string>>();
+
+        IEnumerable<KeyValuePair<State, Dictionary<Year, int>>> sortedRecords = sort
+            ? records.OrderBy(state => state.Key.Name)
+            : records;
+        foreach(var state in sortedRecords)
+        {
+            var columns = new List<string>
+            {
+                state.Key.Name
+            };
+            table.Add(columns);
+
+            foreach(var currentYear in state.Value)
+            {
+                columns.Add(currentYear.Value.ToString());
+            }
         }
 
         return table;

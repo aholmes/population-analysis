@@ -93,6 +93,12 @@ public class AnalysisReport
         return (List<List<string>>)methodInfo!.Invoke(null, [data, true])!;
     }
 
+    static List<List<string>> ToRawTable(object data)
+    {
+        var methodInfo = typeof(Report).GetMethod(nameof(Report.ToRawTable), [data.GetType(), typeof(bool)]);
+        return (List<List<string>>)methodInfo!.Invoke(null, [data, true])!;
+    }
+
     [Theory]
     [MemberData(nameof(GetData))]
     public void ToFormattedTable_Returns_DataTable_With_Headers(object data)
@@ -123,6 +129,20 @@ public class AnalysisReport
         Assert.Equal(STATE_NAME, tableData[0]);
         Assert.Equal(POPULATION.ToString(), tableData[1]);
         Assert.Equal(PRIME_FACTORS, tableData[2]);
+    }
+
+    [Theory]
+    [MemberData(nameof(GetData))]
+    public void ToRawTable_Returns_DataTable_With_Data(object data)
+    {
+        var table = ToRawTable(data);
+
+        Assert.Single(table);
+        var tableData = table[0];
+
+        Assert.Equal(2, tableData.Count);
+        Assert.Equal(STATE_NAME, tableData[0]);
+        Assert.Equal(POPULATION.ToString(), tableData[1]);
     }
 
     [Fact]
@@ -163,6 +183,25 @@ public class AnalysisReport
     }
 
     [Fact]
+    public void ToRawTable_Returns_Sorted_Data()
+    {
+        var records = GetRecords();
+        records.Add(
+            new State(Name: "ZZZ", Slug: "zzz"),
+            new Dictionary<Year, int> { { new Year(YEAR_NUMBER), POPULATION } }
+        );
+        records.Add(
+            new State(Name: "AAA", Slug: "aaa"),
+            new Dictionary<Year, int> { { new Year(YEAR_NUMBER), POPULATION } }
+        );
+
+        var table = records.ToRawTable(sort: true);
+
+        Assert.Equal("AAA", table[0][0]);
+        Assert.Equal("ZZZ", table[2][0]);
+    }
+
+    [Fact]
     public void GetPrimeFactors_Returns_Correct_Prime_Factors()
     {
         var factors = Report.GetPrimeFactors(POPULATION);
@@ -171,7 +210,7 @@ public class AnalysisReport
     }
 
     [Fact]
-    public async Task SaveCsv_Writes_Data_To_Csv()
+    public async Task SaveCsv_Writes_Formatted_Data_To_Csv()
     {
         var table = GetRecords().ToFormattedTable();
         using var ms = new MemoryStream();
@@ -183,6 +222,23 @@ public class AnalysisReport
 
         var expectedContent = $"""
         "{HEADER_STATE_NAME}","{YEAR_NUMBER}","{HEADER_FACTORS}"{"\r\n"}"{STATE_NAME}","{POPULATION}","{PRIME_FACTORS}"{"\r\n"}
+        """;
+        Assert.Equal(expectedContent, content);
+    }
+
+    [Fact]
+    public async Task SaveCsv_Writes_Raw_Data_To_Csv()
+    {
+        var table = GetRecords().ToRawTable();
+        using var ms = new MemoryStream();
+        await table.SaveCsv(ms);
+
+        using var sr = new StreamReader(ms);
+        ms.Seek(0, SeekOrigin.Begin);
+        var content = await sr.ReadToEndAsync();
+
+        var expectedContent = $"""
+        "{STATE_NAME}","{POPULATION}"{"\r\n"}
         """;
         Assert.Equal(expectedContent, content);
     }
