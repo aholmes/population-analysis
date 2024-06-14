@@ -6,6 +6,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.DependencyInjection;
+using System.Runtime.InteropServices;
 
 namespace Analysis;
 class Program
@@ -15,7 +17,10 @@ class Program
         var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
         var log = loggerFactory.CreateLogger<Program>();
 
-        var api = new Api(log);
+        var serviceProvider = new ServiceCollection().AddHttpClient().BuildServiceProvider();
+        var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
+
+        var api = new Api(httpClientFactory, log);
         var data = await api.Get();
 
         if (data == null)
@@ -31,14 +36,44 @@ class Program
         data.Data.Reverse();
         var table = data.ToFormattedTable();
 
-        var tempFile = Path.GetTempFileName();
-        var csvFilename = $"{tempFile}.csv";
+        var success = false;
+        string path;
+        FileInfo fileInfo;
+        FileStream? file = null;
+        do
+        {
+            Console.Write("Enter a path to write the CSV file to: ");
+            path = Console.ReadLine()!;
+            fileInfo = new FileInfo(path);
 
-        using var file = File.Create(csvFilename);
+            if (fileInfo.Directory?.Exists == true)
+            {
+                try
+                {
+                    file = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+                    await table.SaveCsv(file);
+                    success = true;
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    Console.WriteLine($"Permission was denied to either `{fileInfo.DirectoryName}` or `{path}`.");
+                }
+                catch (Exception)
+                {
+                    Console.WriteLine($"An unexpected problem occurred trying to open the file `{path}`.");
+                }
+                finally
+                {
+                    file?.Close();
+                }
+            }
+            else
+            {
+                Console.WriteLine($"The file's directory `{fileInfo.DirectoryName}` does not exist.");
+            }
+        } while (!success);
 
-        await table.SaveCsv(file);
-
-        Console.WriteLine($"CSV written to {csvFilename}");
+        Console.WriteLine($"CSV written to ` {path} `");
         Console.WriteLine("Press any key to exit.");
         Console.Read();
 

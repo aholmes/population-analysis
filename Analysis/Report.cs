@@ -126,7 +126,8 @@ internal static class Report
             sb.AppendLine(string.Join(',', row.Select(col => $"\"{col.Replace("\"","\\\"")}\"")), "\r\n");
         }
 
-        await destinationStream.WriteAsync(Encoding.UTF8.GetBytes(sb.ToString()));
+        var data = Encoding.UTF8.GetBytes(sb.ToString());
+        await destinationStream.WriteAsync(data);
     }
 
     public static void AppendLine(this StringBuilder sb, string line, string newline)

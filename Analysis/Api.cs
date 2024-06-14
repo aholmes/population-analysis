@@ -7,13 +7,15 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
+using System.Net.Http;
 
 [assembly:InternalsVisibleTo("Test")]
 namespace Analysis;
-internal class Api(ILogger log, string? apiResultCachePath = null)
+internal class Api(IHttpClientFactory httpClientFactory, ILogger log, string? apiResultCachePath = null)
 {
     readonly string _apiResultCacheFilename = apiResultCachePath ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), ".api_result_cache.json");
     readonly ILogger log = log;
+    readonly IHttpClientFactory httpClientFactory = httpClientFactory;
 
     /**
      * Read cached JSON data from previous API calls that may
@@ -58,10 +60,9 @@ internal class Api(ILogger log, string? apiResultCachePath = null)
         var data = await GetFromCache();
         if (data != null) return data;
 
-        var httpClient = new HttpClient
-        {
-            BaseAddress = new Uri("https://datausa.io/")
-        };
+        var httpClient = httpClientFactory.CreateClient(nameof(Api));
+        httpClient.BaseAddress = new Uri("https://datausa.io/");
+
         using var response = await httpClient.GetAsync("/api/data?drilldowns=State&measures=Population");
         var json = await response.Content.ReadAsStreamAsync();
 
