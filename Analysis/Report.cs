@@ -50,7 +50,7 @@ internal static class Report
     /// Get a "data table" from deserialized API data.
     ///
     /// This method is similar to <see cref="ToFormattedTable(Result, bool)"/>
-    /// but excludes headers and prime factors
+    /// but excludes the "state name" column in the header and prime factors
     /// </summary>
     /// <param name="records"></param>
     /// <param name="sort">Sort data columns, but not header. Defaults to `true`.</param>
@@ -116,7 +116,7 @@ internal static class Report
     /// <summary>
     /// Format structured API data into a "data table."
     /// This method is similar to <see cref="ToFormattedTable(Dictionary{State, Dictionary{Year, int}}, bool)"/>
-    /// but excludes headers and prime factors
+    /// but excludes the "state name" column in the header and prime factors
     ///
     /// The first column contains state names.
     /// All subsequent columns, excluding the final column, contain year population data.
@@ -126,7 +126,10 @@ internal static class Report
     /// <returns>A "data table" (a list of "rows" containing a list of "columns") with calculated population data.</returns>
     public static List<List<string>> ToRawTable(this Dictionary<State, Dictionary<Year, int>> records, bool sort = true)
     {
-        var table = new List<List<string>>();
+        var table = new List<List<string>>
+        {
+            new []{ "" }.Concat(records.First().Value.Select(o => o.Key.YearNumber)).ToList()
+        };
 
         IEnumerable<KeyValuePair<State, Dictionary<Year, int>>> sortedRecords = sort
             ? records.OrderBy(state => state.Key.Name)

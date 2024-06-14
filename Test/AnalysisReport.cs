@@ -133,12 +133,26 @@ public class AnalysisReport
 
     [Theory]
     [MemberData(nameof(GetData))]
+    public void ToRawTable_Returns_DataTable_With_Headers(object data)
+    {
+        var table = ToRawTable(data);
+
+        Assert.Equal(2, table.Count);
+        var headers = table[0];
+
+        Assert.Equal(2, headers.Count);
+        Assert.Equal("", headers[0]);
+        Assert.Equal(YEAR_NUMBER, headers[1]);
+    }
+
+    [Theory]
+    [MemberData(nameof(GetData))]
     public void ToRawTable_Returns_DataTable_With_Data(object data)
     {
         var table = ToRawTable(data);
 
-        Assert.Single(table);
-        var tableData = table[0];
+        Assert.Equal(2, table.Count);
+        var tableData = table[1];
 
         Assert.Equal(2, tableData.Count);
         Assert.Equal(STATE_NAME, tableData[0]);
@@ -183,6 +197,24 @@ public class AnalysisReport
     }
 
     [Fact]
+    public void ToRawTable_Returns_Unsorted_Header()
+    {
+        var records = GetRecords();
+        records.Add(
+            new State(Name: "ZZZ", Slug: "zzz"),
+            new Dictionary<Year, int> { { new Year(YEAR_NUMBER), POPULATION } }
+        );
+        records.Add(
+            new State(Name: "AAA", Slug: "aaa"),
+            new Dictionary<Year, int> { { new Year(YEAR_NUMBER), POPULATION } }
+        );
+
+        var table = records.ToRawTable(sort: true);
+
+        Assert.Equal("", table[0][0]);
+    }
+
+    [Fact]
     public void ToRawTable_Returns_Sorted_Data()
     {
         var records = GetRecords();
@@ -197,8 +229,8 @@ public class AnalysisReport
 
         var table = records.ToRawTable(sort: true);
 
-        Assert.Equal("AAA", table[0][0]);
-        Assert.Equal("ZZZ", table[2][0]);
+        Assert.Equal("AAA", table[1][0]);
+        Assert.Equal("ZZZ", table[3][0]);
     }
 
     [Fact]
@@ -238,7 +270,7 @@ public class AnalysisReport
         var content = await sr.ReadToEndAsync();
 
         var expectedContent = $"""
-        "{STATE_NAME}","{POPULATION}"{"\r\n"}
+        "","{YEAR_NUMBER}"{"\r\n"}"{STATE_NAME}","{POPULATION}"{"\r\n"}
         """;
         Assert.Equal(expectedContent, content);
     }
