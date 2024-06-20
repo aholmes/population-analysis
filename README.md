@@ -1,6 +1,6 @@
 # Report and Presentation
 
-The report and presentation on population data can be reviewed as [HTML](report/presentation.html) or a Markdown [MARP](report/presentation.md) file under the [report/](report/) directory.
+The report and presentation on population data can be reviewed as [HTML](report/presentation.html) or a Markdown [MARP](report/presentation.md) file under the [report/](report/) directory. The data used for this report can be found in the files [population.csv](report/population.csv) (formatted as per the prompt) and [population.raw.csv](report/population.raw.csv) (raw data used for analysis).
 
 The code used to generate the charts found in the report are in a [Jupyter Notebook](report/PopulationAnalysis.ipynb).
 
