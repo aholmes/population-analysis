@@ -23,7 +23,7 @@ docker run \
     -u $(id -u):$(id -g) \
     -v /the/output/directory:/csv_destination \
     --rm -it \
-    population-analysis:latest
+    aholmes0/population-analysis:latest
 ```
 
 The Docker image can be found on [dockerhub](https://hub.docker.com/repository/docker/aholmes0/population-analysis/general).
